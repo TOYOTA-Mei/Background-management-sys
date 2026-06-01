@@ -3,18 +3,23 @@ Django settings for QianHoufenli project.
 """
 
 from pathlib import Path
-
 import os
+from dotenv import load_dotenv
+
+# 加载.env环境变量文件
+BASE_DIR = Path(__file__).resolve().parent.parent
+env_path = BASE_DIR / '.env'
+if env_path.exists():
+    load_dotenv(env_path)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-test-key-keep-it-safe'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-test-key-keep-it-safe')
 
 # 🔥 正常开启调试，绝对不破坏配置
-DEBUG = True
-ALLOWED_HOSTS = ['*']
+DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 'yes')
+ALLOWED_HOSTS = [host.strip() for host in os.getenv('ALLOWED_HOSTS', '*').split(',')]
 
 # Application definition
 INSTALLED_APPS = [
@@ -78,16 +83,26 @@ TEMPLATES = [
 WSGI_APPLICATION = 'QianHoufenli.wsgi.application'
 
 # Database
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'db_admin',
-        'USER': 'root',
-        'PASSWORD': '1665995697',
-        'HOST': 'localhost',
-        'PORT': 3306,
+DB_ENGINE = os.getenv('DB_ENGINE', 'django.db.backends.mysql')
+
+if DB_ENGINE == 'django.db.backends.mysql':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': os.getenv('DB_NAME', 'db_admin'),
+            'USER': os.getenv('DB_USER', 'root'),
+            'PASSWORD': os.getenv('DB_PASSWORD', ''),
+            'HOST': os.getenv('DB_HOST', 'localhost'),
+            'PORT': int(os.getenv('DB_PORT', 3306)),
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / os.getenv('DB_NAME', 'db.sqlite3'),
+        }
+    }
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -113,14 +128,14 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # 跨域完全放开
 CORS_ALLOW_ALL_ORIGINS = True
 
-MEDIA_ROOT = BASE_DIR / 'media'
-MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / os.getenv('MEDIA_ROOT', 'media')
+MEDIA_URL = os.getenv('MEDIA_URL', 'media/')
 
 # 缓存配置
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
         'LOCATION': 'unique-snowflake',
-        'TIMEOUT': 3600,  # 1小时
+        'TIMEOUT': int(os.getenv('CACHE_TIMEOUT', 3600)),  # 默认1小时
     }
 }
